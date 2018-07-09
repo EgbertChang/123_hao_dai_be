@@ -3,6 +3,9 @@ package main
 import (
 	"123_hao_dai/elea"
 	"123_hao_dai/src/server"
+
+	_ "github.com/go-sql-driver/mysql"
+
 	"runtime"
 )
 

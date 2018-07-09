@@ -1,6 +1,7 @@
 package server
 
 import (
+	"database/sql"
 	"net/http"
 
 	"123_hao_dai/elea"
@@ -19,9 +20,13 @@ func register(h *elea.Handle) {
 }
 
 func Path1(w http.ResponseWriter, r *http.Request) {
-	ua := r.Header.Get("user-agent")
-	w.Write([]byte("<body><h1>user-agent is: </h1></body>"))
-	w.Write([]byte(ua))
+	defer func() {
+		_ = recover()
+	}()
+	_, err := sql.Open("mysql", "root:wenjiamin@tcp(139.196.74.31:3306)/123_hao_dai")
+	if err != nil {
+		panic(err)
+	}
 }
 
 func Path2(w http.ResponseWriter, r *http.Request) {
