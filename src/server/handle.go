@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"123_hao_dai_be/elea"
+	"bytes"
 	"database/sql"
 	"encoding/json"
 )
@@ -64,14 +65,25 @@ func Path2(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		recover()
 	}()
-	b := &B{}
-	err := db.QueryRow(selectBInfo).Scan(&b.Id, &b.Name, &b.AID, &b.Url)
+	rows, err := db.Query(selectBInfoList, 0, 20)
 	if err != nil {
 		panic(err)
 		return
 	}
-	bBytes, _ := json.Marshal(b)
-	w.Write(bBytes)
+	defer rows.Close()
+	var BList [][]byte
+	for rows.Next() {
+		b := &B{}
+		_ = rows.Scan(&b.Id, &b.Name, &b.AID, &b.Url)
+		bBytes, _ := json.Marshal(b)
+		BList = append(BList, bBytes)
+	}
+	// 创建一个 nil slice 直接使用
+	var bs []byte
+	bs = append(bs, []byte("[")...)
+	bs = append(bs, bytes.Join(BList, []byte(","))...)
+	bs = append(bs, []byte("]")...)
+	w.Write(bs)
 }
 
 func Path3(w http.ResponseWriter, r *http.Request) {
