@@ -1,11 +1,18 @@
 package server
 
 import (
-	"database/sql"
 	"net/http"
 
 	"123_hao_dai_be/elea"
+	"database/sql"
+	"encoding/json"
 )
+
+var db *sql.DB
+
+func init() {
+	// 无法在这里初始化数据库的连接状态
+}
 
 type HttpInterceptor struct{}
 
@@ -14,23 +21,57 @@ func (form *HttpInterceptor) Intercept(w http.ResponseWriter, r *http.Request) b
 }
 
 func register(h *elea.Handle) {
+	var err error
+	db, err = sql.Open("mysql", "root:wenjiamin@tcp(139.196.74.31:3306)/123_hao_dai")
+	defer func() {
+		_ = recover()
+	}()
+	if err != nil {
+		panic(err)
+	}
 	h.Register("/path1", Path1)
 	h.Register("/path2", Path2)
 	h.Register("/path3", Path3)
 }
 
+type A struct {
+	Id   int
+	Name string
+}
+
 func Path1(w http.ResponseWriter, r *http.Request) {
 	defer func() {
-		_ = recover()
+		recover()
 	}()
-	_, err := sql.Open("mysql", "root:wenjiamin@tcp(139.196.74.31:3306)/123_hao_dai")
+	a := &A{}
+	err := db.QueryRow(selectAInfo).Scan(&a.Id, &a.Name)
 	if err != nil {
 		panic(err)
+		return
 	}
+	aBytes, _ := json.Marshal(a)
+	w.Write(aBytes)
+}
+
+type B struct {
+	Id   int
+	Name string
+	AID  int
+	Url  string
 }
 
 func Path2(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello Path2"))
+	defer func() {
+		recover()
+	}()
+	b := &B{}
+	err := db.QueryRow(selectBInfo).Scan(&b.Id, &b.Name, &b.AID, &b.Url)
+	if err != nil {
+		panic(err)
+		return
+	}
+	bBytes, _ := json.Marshal(b)
+	w.Write(bBytes)
 }
 
 func Path3(w http.ResponseWriter, r *http.Request) {
