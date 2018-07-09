@@ -1,8 +1,8 @@
 package main
 
 import (
-	"123_hao_dai/elea"
-	"123_hao_dai/src/server"
+	"123_hao_dai_be/elea"
+	"123_hao_dai_be/src/server"
 
 	_ "github.com/go-sql-driver/mysql"
 

@@ -2,7 +2,7 @@ FROM golang
 
 ENV TZ=Asia/Shanghai
 
-WORKDIR /go/src/123_hao_dai
+WORKDIR /go/src/123_hao_dai_be
 
 # Copy the current code into our WORKDIR
 COPY . .
