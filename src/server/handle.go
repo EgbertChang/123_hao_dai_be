@@ -7,6 +7,9 @@ import (
 	"bytes"
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"log"
 )
 
 var db *sql.DB
@@ -22,6 +25,7 @@ func (form *HttpInterceptor) Intercept(w http.ResponseWriter, r *http.Request) b
 }
 
 func register(h *elea.Handle) {
+	// 数据库的打开操作，可以转移到其他地方
 	var err error
 	db, err = sql.Open("mysql", "root:wenjiamin@tcp(139.196.74.31:3306)/123_hao_dai")
 	defer func() {
@@ -32,7 +36,15 @@ func register(h *elea.Handle) {
 	}
 	h.Register("/path1", Path1)
 	h.Register("/path2", Path2)
-	h.Register("/path3", Path3)
+
+	h.Register("/be/manage/A/add", addA)
+	h.Register("/be/manage/B/add", addB)
+}
+
+func Handle() elea.HandleSet {
+	h := &elea.Handle{}
+	register(h)
+	return h
 }
 
 type A struct {
@@ -55,10 +67,12 @@ func Path1(w http.ResponseWriter, r *http.Request) {
 }
 
 type B struct {
-	Id   int
-	Name string
-	AID  int
-	Url  string
+	Id         int
+	Name       string
+	PartyAId   int
+	PartyAUrl  string
+	PartyBUrl  string
+	ClickCount int
 }
 
 func Path2(w http.ResponseWriter, r *http.Request) {
@@ -74,7 +88,7 @@ func Path2(w http.ResponseWriter, r *http.Request) {
 	var BList [][]byte
 	for rows.Next() {
 		b := &B{}
-		_ = rows.Scan(&b.Id, &b.Name, &b.AID, &b.Url)
+		_ = rows.Scan(&b.Id, &b.Name, &b.PartyAId, &b.PartyAUrl, &b.PartyBUrl, &b.ClickCount)
 		bBytes, _ := json.Marshal(b)
 		BList = append(BList, bBytes)
 	}
@@ -86,12 +100,28 @@ func Path2(w http.ResponseWriter, r *http.Request) {
 	w.Write(bs)
 }
 
-func Path3(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("<body><h1>Hello Path3</h1></body>"))
+type addBParams struct {
+	PartyAId  int    `json:"partyAId"`
+	Name      string `json:"name"`
+	PartyAUrl string `json:"partyAUrl"`
+	PartyBUrl string `json:"partyBUrl"`
 }
 
-func Handle() elea.HandleSet {
-	h := &elea.Handle{}
-	register(h)
-	return h
+func addB(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	bodyBytes, _ := ioutil.ReadAll(r.Body)
+	var params addBParams
+	json.Unmarshal(bodyBytes, &params)
+	stmt, err := db.Prepare(insertB)
+	defer stmt.Close()
+	_, err = stmt.Exec(params.Name, params.PartyAId, params.PartyAUrl, params.PartyBUrl)
+	if err != nil {
+		log.Println(err)
+	}
+}
+
+func addA(w http.ResponseWriter, r *http.Request) {
+	fmt.Println(r.Method)
+
+	fmt.Println("新增A接口")
 }
