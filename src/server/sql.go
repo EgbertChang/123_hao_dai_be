@@ -1,9 +1,13 @@
 package server
 
-const selectAInfo = "SELECT id, name FROM partyA WHERE id=5"
+const insertASql = "INSERT IGNORE INTO partyA (name) VALUES (?)"
 
-const selectBInfo = "SELECT id, name, partyAId, url FROM partyB WHERE id=6"
+const selectAllASql = "SELECT id, name, (SELECT COUNT(*) FROM partyB WHERE partyAId=partyA.id) AS partyBNum FROM partyA LIMIT ?, ?"
 
-const selectBInfoList = "SELECT id, name, partyAId, url FROM partyB limit ?, ?"
+const deleteASql = "DELETE FROM partyA WHERE id = ?"
 
-const insertB = "INSERT IGNORE INTO partyB (name, partyAId, partyAUrl, partyBUrl) VALUES (?, ?, ?, ?)"
+const insertBSql = "INSERT IGNORE INTO partyB (name, partyAId, partyAUrl, partyBUrl) VALUES (?, ?, ?, ?)"
+
+const selectBListSql = "SELECT id, name, partyAUrl, partyBUrl, clickCount FROM partyB WHERE partyAId = ? LIMIT ?, ?"
+
+const deleteBSql = "DELETE FROM partyB WHERE id = ?"
