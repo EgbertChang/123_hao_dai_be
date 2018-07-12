@@ -24,7 +24,7 @@ func (form *HttpInterceptor) Intercept(w http.ResponseWriter, r *http.Request) b
 	return true
 }
 
-func register(h *elea.Handle) {
+func registerHandler(h *elea.Handle) {
 	// 数据库的打开操作，可以转移到其他地方
 	var err error
 	db, err = sql.Open("mysql", "root:wenjiamin@tcp(139.196.74.31:3306)/123_hao_dai")
@@ -37,6 +37,7 @@ func register(h *elea.Handle) {
 	if err != nil {
 		panic(err)
 	}
+
 	h.Register("/be/manage/A/add", addA)
 	h.Register("/be/manage/A/list", listA)
 	h.Register("/be/manage/A/delete/", deleteA)
@@ -47,7 +48,8 @@ func register(h *elea.Handle) {
 
 func Handle() elea.HandleSet {
 	h := &elea.Handle{}
-	register(h)
+	registerHandler(h)
+	registerFileServer(h)
 	return h
 }
 

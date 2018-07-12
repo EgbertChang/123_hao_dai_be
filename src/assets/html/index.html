@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Title</title>
+  <style>
+    .upload {
+      padding: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="upload">
+  <input type="file">
+</div>
+
+<script>
+  window.onload = function () {
+    const input = document.querySelector("input")
+    input.onchange = () => {
+      const file = document.querySelector("input").files[0]
+      const form = new FormData()
+      form.append("img", file)
+      let req = new XMLHttpRequest()
+      req.open('POST', '/be/file/upload')
+      req.onreadystatechange = function () {
+        if (req.readyState === 4) {
+          if (req.status === 200) {
+            console.log(req.responseText)
+            req = null  // 避免内存泄漏
+          }
+        }
+      }
+      req.send(form)
+    }
+  }
+</script>
+
+</body>
+</html>
