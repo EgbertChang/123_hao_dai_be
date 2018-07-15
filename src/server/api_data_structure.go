@@ -45,16 +45,16 @@ type B struct {
 }
 
 type addBParams struct {
-	PartyAId  int    `json:"partyAId"`
+	PartyAId  string `json:"partyAId"`
 	Name      string `json:"name"`
 	PartyAUrl string `json:"partyAUrl"`
 	PartyBUrl string `json:"partyBUrl"`
 }
 
 type listBParams struct {
-	PartyAId  int `json:"partyAId"`
-	PageIndex int `json:"pageIndex"`
-	PageSize  int `json:"pageSize"`
+	PartyAId  string `json:"partyAId"`
+	PageIndex int    `json:"pageIndex"`
+	PageSize  int    `json:"pageSize"`
 }
 
 type product struct {

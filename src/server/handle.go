@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"strconv"
 	"strings"
 )
 
@@ -122,7 +123,8 @@ func addB(w http.ResponseWriter, r *http.Request) {
 	var params addBParams
 	json.Unmarshal(bodyBytes, &params)
 	stmt, err := db.Prepare(insertBSql)
-	_, err = stmt.Exec(params.Name, params.PartyAId, params.PartyAUrl, params.PartyBUrl)
+	partyAId, _ := strconv.Atoi(params.PartyAId)
+	_, err = stmt.Exec(params.Name, partyAId, params.PartyAUrl, params.PartyBUrl)
 	ret := CreateResponse{Msg: "success"}
 	retBytes, err := json.Marshal(ret)
 	w.Write(retBytes)
@@ -139,7 +141,8 @@ func listB(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	var params listBParams
 	json.Unmarshal(bodyBytes, &params)
-	rows, err := db.Query(selectBListSql, params.PartyAId, (params.PageIndex-1)*params.PageSize, params.PageSize)
+	partyAId, _ := strconv.Atoi(params.PartyAId)
+	rows, err := db.Query(selectBListSql, partyAId, (params.PageIndex-1)*params.PageSize, params.PageSize)
 	if err != nil {
 		// 数据库抛出的错误
 		ret := RetrieveResponse{Msg: "failure", Data: []int{}}
