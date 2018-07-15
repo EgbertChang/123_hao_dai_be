@@ -15,7 +15,7 @@ func init() {
 
 func main() {
 	Server := elea.Server{
-		Addr:        ":8080",
+		Addr:        ":9090",
 		Handle:      server.Handle(),
 		Interceptor: &server.HttpInterceptor{},
 	}
