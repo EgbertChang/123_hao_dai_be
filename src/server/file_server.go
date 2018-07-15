@@ -2,6 +2,7 @@ package server
 
 import (
 	"123_hao_dai_be/elea"
+	"encoding/json"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -12,12 +13,12 @@ import (
 )
 
 func registerFileServer(h *elea.Handle) {
-	h.Register("/be/file/upload", receiveFile)
+	h.Register("/be/manage/product/logo/upload", receiveFile)
 	h.Register("/be/file/", serveFile)
 }
 
 func receiveFile(w http.ResponseWriter, r *http.Request) {
-	file, fileHeader, err := r.FormFile("img")
+	file, fileHeader, err := r.FormFile("logo")
 	if err != nil {
 		w.Write([]byte("failure"))
 		return
@@ -29,7 +30,12 @@ func receiveFile(w http.ResponseWriter, r *http.Request) {
 	newFileName := strconv.FormatInt(time.Now().UnixNano()/1000, 10) + "." + fileType
 	fileDuplicate, _ := os.Create("./src/assets/img/" + newFileName)
 	io.Copy(fileDuplicate, file)
-	w.Write([]byte("success"))
+	var res UploadResponse
+	res.Msg = "success"
+	res.Data.Url = "/be/file/img/" + newFileName
+	resBytes, _ := json.Marshal(res)
+	// 返回图片存放的信息
+	w.Write(resBytes)
 }
 
 func serveFile(w http.ResponseWriter, r *http.Request) {

@@ -44,6 +44,10 @@ func registerHandler(h *elea.Handle) {
 	h.Register("/be/manage/B/add", addB)
 	h.Register("/be/manage/B/list", listB)
 	h.Register("/be/manage/B/delete/", deleteB)
+
+	h.Register("/be/manage/product/add", addProduct)
+	h.Register("/be/manage/product/search", searchProduct)
+	h.Register("/be/manage/product/info", productInfo)
 }
 
 func Handle() elea.HandleSet {
@@ -59,7 +63,7 @@ func addA(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(bodyBytes, &params)
 	stmt, err := db.Prepare(insertASql)
 	_, err = stmt.Exec(params.Name)
-	ret := CreateResult{Msg: "success"}
+	ret := CreateResponse{Msg: "success"}
 	retBytes, err := json.Marshal(ret)
 	w.Write(retBytes)
 	defer func() {
@@ -83,7 +87,7 @@ func listA(w http.ResponseWriter, r *http.Request) {
 		err = rows.Scan(&a.Id, &a.Name, &a.BNum)
 		AList = append(AList, *a)
 	}
-	ret := RetrieveResult{Msg: "success", Data: AList}
+	ret := RetrieveResponse{Msg: "success", Data: AList}
 	retBytes, err := json.Marshal(ret)
 	w.Write(retBytes)
 	defer func() {
@@ -100,7 +104,7 @@ func deleteA(w http.ResponseWriter, r *http.Request) {
 	id := steps[len(steps)-1]
 	stmt, err := db.Prepare(deleteASql)
 	_, err = stmt.Exec(id)
-	ret := DeleteResult{Msg: "success"}
+	ret := DeleteResponse{Msg: "success"}
 	retBytes, err := json.Marshal(ret)
 	w.Write(retBytes)
 	defer func() {
@@ -116,7 +120,7 @@ func addB(w http.ResponseWriter, r *http.Request) {
 	json.Unmarshal(bodyBytes, &params)
 	stmt, err := db.Prepare(insertBSql)
 	_, err = stmt.Exec(params.Name, params.PartyAId, params.PartyAUrl, params.PartyBUrl)
-	ret := CreateResult{Msg: "success"}
+	ret := CreateResponse{Msg: "success"}
 	retBytes, err := json.Marshal(ret)
 	w.Write(retBytes)
 	defer func() {
@@ -135,7 +139,7 @@ func listB(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query(selectBListSql, params.PartyAId, (params.PageIndex-1)*params.PageSize, params.PageSize)
 	if err != nil {
 		// 数据库抛出的错误
-		ret := RetrieveResult{Msg: "failure", Data: []int{}}
+		ret := RetrieveResponse{Msg: "failure", Data: []int{}}
 		retBytes, _ := json.Marshal(ret)
 		w.Write(retBytes)
 		return
@@ -149,7 +153,7 @@ func listB(w http.ResponseWriter, r *http.Request) {
 	// var bs []byte 创建一个 nil slice 直接使用
 	// 这里可以使用装饰器模式
 	// var ret Result
-	ret := RetrieveResult{Msg: "success", Data: BList}
+	ret := RetrieveResponse{Msg: "success", Data: BList}
 	retBytes, err := json.Marshal(ret)
 	w.Write(retBytes)
 	defer func() {
@@ -163,10 +167,52 @@ func deleteB(w http.ResponseWriter, r *http.Request) {
 	id := steps[len(steps)-1]
 	stmt, err := db.Prepare(deleteBSql)
 	_, err = stmt.Exec(id)
-	ret := DeleteResult{Msg: "success"}
+	ret := DeleteResponse{Msg: "success"}
 	retBytes, err := json.Marshal(ret)
 	w.Write(retBytes)
 	defer func() {
 		log.Println(err)
 	}()
 }
+
+func addProduct(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, _ := ioutil.ReadAll(r.Body)
+	var params product
+	json.Unmarshal(bodyBytes, &params)
+	personalQualificationSting := strings.Join(params.PersonalQualification, ",")
+	termString := strings.Join(params.Term, ",")
+	var res CreateResponse
+	stmt, err := db.Prepare(insertProductSql)
+	if err != nil {
+		res.Msg = "failure"
+		retBytes, _ := json.Marshal(res)
+		w.Write(retBytes)
+		return
+	}
+	InterestBytes, _ := json.Marshal(params.Interest)
+	LendingRateBytes, _ := json.Marshal(params.LendingRate)
+	_, err = stmt.Exec(params.Name, params.Url, params.Type,
+		personalQualificationSting,
+		params.LimitMin, params.LimitMax, params.LogoUrl, params.Slogan, params.ApplyNumber,
+		termString,
+		InterestBytes, LendingRateBytes,
+		params.Credit, params.AuditType, params.AccountInType, params.ApplyStrategy)
+	if err != nil {
+		res.Msg = "failure"
+	} else {
+		// ret.LastInsertId()  // 如果是数据库返回err，执行这行代码会导致接口崩溃
+		res.Msg = "success"
+	}
+	retBytes, _ := json.Marshal(res)
+	w.Write(retBytes)
+	defer func() {
+		r.Body.Close()
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+}
+
+func searchProduct(w http.ResponseWriter, r *http.Request) {}
+
+func productInfo(w http.ResponseWriter, r *http.Request) {}

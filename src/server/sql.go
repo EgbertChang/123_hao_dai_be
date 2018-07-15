@@ -16,6 +16,11 @@ const deleteBSql = "DELETE FROM partyB WHERE id = ?"
 
 const selectBInfoSql = ""
 
-const createProductSql = ""
+const insertProductSql = "INSERT IGNORE INTO product " +
+	"(name, url, type, personalQualification, limitMin, limitMax, logoUrl, slogan, applyNumber, term, interest, lendingRate, credit, auditType, accountInType, applyStrategy) " +
+	"VALUES " +
+	"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-const searchProductListSql = ""
+const selectProductListSql = ""
+
+const selectProductInfoSql = ""
