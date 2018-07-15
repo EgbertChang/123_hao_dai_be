@@ -47,7 +47,7 @@ func registerHandler(h *elea.Handle) {
 	h.Register("/be/manage/B/delete/", deleteB)
 
 	h.Register("/be/manage/product/add", addProduct)
-	h.Register("/be/manage/product/search", searchProduct)
+	h.Register("/be/manage/product/list", listProduct)
 	h.Register("/be/manage/product/info", productInfo)
 }
 
@@ -222,6 +222,34 @@ func addProduct(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
-func searchProduct(w http.ResponseWriter, r *http.Request) {}
+func listProduct(w http.ResponseWriter, r *http.Request) {
+	rows, err := db.Query(selectProductListSql)
+	if err != nil {
+		// 数据库抛出的错误
+		ret := RetrieveResponse{Msg: "failure", Data: []int{}}
+		retBytes, _ := json.Marshal(ret)
+		w.Write(retBytes)
+		return
+	}
+	var productSearchList []productSearch
+	for rows.Next() {
+		p := &productSearch{}
+		var temp []byte
+		var interest interest
+		_ = rows.Scan(&p.Name, &p.LimitMin, &p.LimitMax, &temp)
+		json.Unmarshal(temp, &interest)
+		p.Interest = interest
+		productSearchList = append(productSearchList, *p)
+	}
+	if productSearchList == nil {
+		productSearchList = []productSearch{}
+	}
+	ret := RetrieveResponse{Msg: "success", Data: productSearchList}
+	retBytes, err := json.Marshal(ret)
+	w.Write(retBytes)
+	defer func() {
+		rows.Close()
+	}()
+}
 
 func productInfo(w http.ResponseWriter, r *http.Request) {}

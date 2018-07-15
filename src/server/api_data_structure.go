@@ -75,3 +75,15 @@ type product struct {
 	AccountInType         string      `json:"accountInType"`
 	ApplyStrategy         interface{} `json:"applyStrategy"`
 }
+
+type productSearch struct {
+	Name     string   `json:"name"`
+	LimitMin string   `json:"limitMin"`
+	LimitMax string   `json:"limitMax"`
+	Interest interest `json:"interest"`
+}
+
+type interest struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
