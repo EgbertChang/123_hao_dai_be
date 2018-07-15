@@ -87,6 +87,9 @@ func listA(w http.ResponseWriter, r *http.Request) {
 		err = rows.Scan(&a.Id, &a.Name, &a.BNum)
 		AList = append(AList, *a)
 	}
+	if AList == nil {
+		AList = []A{}
+	}
 	ret := RetrieveResponse{Msg: "success", Data: AList}
 	retBytes, err := json.Marshal(ret)
 	w.Write(retBytes)
@@ -149,6 +152,9 @@ func listB(w http.ResponseWriter, r *http.Request) {
 		b := &B{}
 		_ = rows.Scan(&b.Id, &b.Name, &b.PartyAUrl, &b.PartyBUrl, &b.ClickCount)
 		BList = append(BList, *b)
+	}
+	if BList == nil {
+		BList = []B{}
 	}
 	// var bs []byte 创建一个 nil slice 直接使用
 	// 这里可以使用装饰器模式
