@@ -24,3 +24,5 @@ const insertProductSql = "INSERT IGNORE INTO product " +
 const selectProductListSql = "SELECT name, limitMin, limitMin, interest FROM product"
 
 const selectProductInfoSql = ""
+
+const deleteProductSql = ""
