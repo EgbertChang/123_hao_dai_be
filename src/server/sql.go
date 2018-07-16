@@ -21,8 +21,8 @@ const insertProductSql = "INSERT IGNORE INTO product " +
 	"VALUES " +
 	"(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
-const selectProductListSql = "SELECT name, limitMin, limitMin, interest FROM product"
+const selectProductListSql = "SELECT id, name, limitMin, limitMax, interest FROM product"
 
-const selectProductInfoSql = ""
+const selectProductDetailSql = "SELECT * FROM product WHERE id = ?"
 
-const deleteProductSql = ""
+const deleteProductSql = "DELETE FROM product WHERE id = ?"

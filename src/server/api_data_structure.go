@@ -73,10 +73,31 @@ type product struct {
 	Credit                string      `json:"credit"`
 	AuditType             string      `json:"auditType"`
 	AccountInType         string      `json:"accountInType"`
-	ApplyStrategy         interface{} `json:"applyStrategy"`
+	ApplyStrategy         string      `json:"applyStrategy"`
+}
+
+type productInfo struct {
+	Id                    string      `json:"id"`
+	Name                  string      `json:"name"`
+	Url                   string      `json:"url"`
+	Type                  string      `json:"type"`
+	PersonalQualification []string    `json:"personalQualification"`
+	LimitMin              string      `json:"limitMin"`
+	LimitMax              string      `json:"limitMax"`
+	LogoUrl               string      `json:"logoUrl"`
+	Slogan                string      `json:"slogan"`
+	ApplyNumber           int         `json:"applyNumber"`
+	Term                  []string    `json:"term"`
+	Interest              interface{} `json:"interest"`
+	LendingRate           interface{} `json:"lendingRate"`
+	Credit                string      `json:"credit"`
+	AuditType             string      `json:"auditType"`
+	AccountInType         string      `json:"accountInType"`
+	ApplyStrategy         string      `json:"applyStrategy"`
 }
 
 type productSearch struct {
+	Id       string   `json:"id"`
 	Name     string   `json:"name"`
 	LimitMin string   `json:"limitMin"`
 	LimitMax string   `json:"limitMax"`
@@ -84,6 +105,11 @@ type productSearch struct {
 }
 
 type interest struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
+type lendingRate struct {
 	Type  string `json:"type"`
 	Value string `json:"value"`
 }
