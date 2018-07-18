@@ -3,6 +3,7 @@ package server
 import (
 	"123_hao_dai_be/elea"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -15,6 +16,27 @@ import (
 func registerFileServer(h *elea.Handle) {
 	h.Register("/be/manage/product/logo/upload", receiveFile)
 	h.Register("/be/file/", serveFile)
+
+	// todo:
+	h.Register("/lab/img/upload", receiveImage)
+	h.Register("/lab/img/free", serveImage)
+}
+
+func receiveImage(w http.ResponseWriter, r *http.Request) {
+	file, fileHeader, _ := r.FormFile("img")
+	fileBytes, _ := ioutil.ReadAll(file)
+	fmt.Println(fileHeader.Filename)
+	db.Exec("INSERT INTO test (img) VALUES (?)", fileBytes)
+}
+
+func serveImage(w http.ResponseWriter, r *http.Request) {
+	var img []byte
+	var id int
+	row := db.QueryRow("SELECT id, img FROM test WHERE id = 13")
+	row.Scan(&id, &img)
+	fmt.Println(id)
+	fmt.Println(len(img))
+	w.Write(img)
 }
 
 func receiveFile(w http.ResponseWriter, r *http.Request) {
