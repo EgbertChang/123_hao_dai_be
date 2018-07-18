@@ -189,6 +189,7 @@ func addProduct(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, _ := ioutil.ReadAll(r.Body)
 	var params product
 	json.Unmarshal(bodyBytes, &params)
+	categorySting := strings.Join(params.Type, ",")
 	personalQualificationSting := strings.Join(params.PersonalQualification, ",")
 	termString := strings.Join(params.Term, ",")
 	var res CreateResponse
@@ -203,7 +204,7 @@ func addProduct(w http.ResponseWriter, r *http.Request) {
 	LendingRateBytes, _ := json.Marshal(params.LendingRate)
 	_, err = stmt.Exec(params.Name,
 		params.Url,
-		params.Type,
+		categorySting,
 		personalQualificationSting,
 		params.LimitMin,
 		params.LimitMax,
@@ -280,6 +281,7 @@ func productDetail(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		p := &productInfo{}
 
+		var categorySting string
 		var personalQualification string
 		var term string
 		var temp1 []byte
@@ -290,7 +292,7 @@ func productDetail(w http.ResponseWriter, r *http.Request) {
 		_ = rows.Scan(&p.Id,
 			&p.Name,
 			&p.Url,
-			&p.Type,
+			&categorySting,
 			&personalQualification,
 			&p.LimitMin,
 			&p.LimitMax,
@@ -308,6 +310,7 @@ func productDetail(w http.ResponseWriter, r *http.Request) {
 		json.Unmarshal(temp1, &interest)
 		json.Unmarshal(temp2, &lendingRate)
 		p.Term = strings.Split(term, ",")
+		p.Type = strings.Split(categorySting, ",")
 		p.PersonalQualification = strings.Split(personalQualification, ",")
 		p.Interest = interest
 		p.LendingRate = lendingRate

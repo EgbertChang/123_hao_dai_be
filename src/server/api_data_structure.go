@@ -60,7 +60,7 @@ type listBParams struct {
 type product struct {
 	Name                  string      `json:"name"`
 	Url                   string      `json:"url"`
-	Type                  string      `json:"type"`
+	Type                  []string    `json:"type"`
 	PersonalQualification []string    `json:"personalQualification"`
 	LimitMin              string      `json:"limitMin"`
 	LimitMax              string      `json:"limitMax"`
@@ -80,7 +80,7 @@ type productInfo struct {
 	Id                    string      `json:"id"`
 	Name                  string      `json:"name"`
 	Url                   string      `json:"url"`
-	Type                  string      `json:"type"`
+	Type                  []string    `json:"type"`
 	PersonalQualification []string    `json:"personalQualification"`
 	LimitMin              string      `json:"limitMin"`
 	LimitMax              string      `json:"limitMax"`
