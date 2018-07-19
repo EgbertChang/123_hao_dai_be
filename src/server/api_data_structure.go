@@ -4,13 +4,17 @@ type CreateResponse struct {
 	Msg string `json:"msg"`
 }
 
+type DeleteResponse struct {
+	Msg string `json:"msg"`
+}
+
+type UpdateResponse struct {
+	Msg string `json:"msg"`
+}
+
 type RetrieveResponse struct {
 	Msg  string      `json:"msg"`
 	Data interface{} `json:"data"`
-}
-
-type DeleteResponse struct {
-	Msg string `json:"msg"`
 }
 
 type UploadResponse struct {

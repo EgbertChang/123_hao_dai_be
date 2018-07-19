@@ -47,9 +47,10 @@ func registerHandler(h *elea.Handle) {
 	h.Register("/be/manage/B/delete/", deleteB)
 
 	h.Register("/be/manage/product/add", addProduct)
-	h.Register("/be/manage/product/list", listProduct)
-	h.Register("/be/manage/product/detail/", productDetail)
 	h.Register("/be/manage/product/delete/", deleteProduct)
+	h.Register("/be/manage/product/edit/", editProduct)
+	h.Register("/be/manage/product/detail/", productDetail)
+	h.Register("/be/manage/product/list", listProduct)
 }
 
 func Handle() elea.HandleSet {
@@ -234,6 +235,128 @@ func addProduct(w http.ResponseWriter, r *http.Request) {
 	}()
 }
 
+func deleteProduct(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	steps := strings.Split(path, "/")
+	id := steps[len(steps)-1]
+	stmt, err := db.Prepare(deleteProductSql)
+	_, err = stmt.Exec(id)
+	ret := DeleteResponse{Msg: "success"}
+	retBytes, err := json.Marshal(ret)
+	w.Write(retBytes)
+	defer func() {
+		if err != nil {
+			log.Println(err)
+		}
+	}()
+}
+
+func editProduct(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	steps := strings.Split(path, "/")
+	id := steps[len(steps)-1]
+	bodyBytes, _ := ioutil.ReadAll(r.Body)
+	var params product
+	json.Unmarshal(bodyBytes, &params)
+	categorySting := strings.Join(params.Type, ",")
+	personalQualificationSting := strings.Join(params.PersonalQualification, ",")
+	termString := strings.Join(params.Term, ",")
+	res := UpdateResponse{}
+	stmt, err := db.Prepare(updateProductSql)
+	if err != nil {
+		res.Msg = "failure"
+		retBytes, _ := json.Marshal(res)
+		w.Write(retBytes)
+		return
+	}
+	InterestBytes, _ := json.Marshal(params.Interest)
+	LendingRateBytes, _ := json.Marshal(params.LendingRate)
+	_, err = stmt.Exec(
+		params.Name,
+		params.Url,
+		categorySting,
+		personalQualificationSting,
+		params.LimitMin,
+		params.LimitMax,
+		params.LogoUrl,
+		params.Slogan,
+		params.ApplyNumber,
+		termString,
+		InterestBytes,
+		LendingRateBytes,
+		params.Credit,
+		params.AuditType,
+		params.AccountInType,
+		params.ApplyStrategy,
+		id)
+	if err != nil {
+		res.Msg = "failure"
+	} else {
+		// ret.LastInsertId()  // 如果是数据库返回err，执行这行代码会导致接口崩溃
+		res.Msg = "success"
+	}
+	res.Msg = "success"
+	resBytes, _ := json.Marshal(res)
+	w.Write(resBytes)
+}
+
+func productDetail(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	steps := strings.Split(path, "/")
+	id := steps[len(steps)-1]
+	rows, err := db.Query(selectProductDetailSql, id)
+	if err != nil {
+		// 数据库抛出的错误
+		ret := RetrieveResponse{Msg: "failure", Data: []int{}}
+		retBytes, _ := json.Marshal(ret)
+		w.Write(retBytes)
+		return
+	}
+	productSearch := productInfo{}
+	for rows.Next() {
+		var categorySting string
+		var personalQualification string
+		var term string
+		var temp1 []byte
+		var interest interest
+		var temp2 []byte
+		var lendingRate lendingRate
+
+		_ = rows.Scan(&productSearch.Id,
+			&productSearch.Name,
+			&productSearch.Url,
+			&categorySting,
+			&personalQualification,
+			&productSearch.LimitMin,
+			&productSearch.LimitMax,
+			&productSearch.LogoUrl,
+			&productSearch.Slogan,
+			&productSearch.ApplyNumber,
+			&term,
+			&temp1,
+			&temp2,
+			&productSearch.Credit,
+			&productSearch.AuditType,
+			&productSearch.AccountInType,
+			&productSearch.ApplyStrategy)
+
+		json.Unmarshal(temp1, &interest)
+		json.Unmarshal(temp2, &lendingRate)
+		productSearch.Term = strings.Split(term, ",")
+		productSearch.Type = strings.Split(categorySting, ",")
+		productSearch.PersonalQualification = strings.Split(personalQualification, ",")
+		productSearch.Interest = interest
+		productSearch.LendingRate = lendingRate
+	}
+
+	res := RetrieveResponse{Msg: "success", Data: productSearch}
+	retBytes, err := json.Marshal(res)
+	w.Write(retBytes)
+	defer func() {
+		rows.Close()
+	}()
+}
+
 func listProduct(w http.ResponseWriter, r *http.Request) {
 	rows, err := db.Query(selectProductListSql)
 	if err != nil {
@@ -261,84 +384,5 @@ func listProduct(w http.ResponseWriter, r *http.Request) {
 	w.Write(retBytes)
 	defer func() {
 		rows.Close()
-	}()
-}
-
-func productDetail(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
-	steps := strings.Split(path, "/")
-	id := steps[len(steps)-1]
-	rows, err := db.Query(selectProductDetailSql, id)
-	if err != nil {
-		// 数据库抛出的错误
-		ret := RetrieveResponse{Msg: "failure", Data: []int{}}
-		retBytes, _ := json.Marshal(ret)
-		w.Write(retBytes)
-		return
-	}
-
-	var productSearchList []productInfo
-	for rows.Next() {
-		p := &productInfo{}
-
-		var categorySting string
-		var personalQualification string
-		var term string
-		var temp1 []byte
-		var interest interest
-		var temp2 []byte
-		var lendingRate lendingRate
-
-		_ = rows.Scan(&p.Id,
-			&p.Name,
-			&p.Url,
-			&categorySting,
-			&personalQualification,
-			&p.LimitMin,
-			&p.LimitMax,
-			&p.LogoUrl,
-			&p.Slogan,
-			&p.ApplyNumber,
-			&term,
-			&temp1,
-			&temp2,
-			&p.Credit,
-			&p.AuditType,
-			&p.AccountInType,
-			&p.ApplyStrategy)
-
-		json.Unmarshal(temp1, &interest)
-		json.Unmarshal(temp2, &lendingRate)
-		p.Term = strings.Split(term, ",")
-		p.Type = strings.Split(categorySting, ",")
-		p.PersonalQualification = strings.Split(personalQualification, ",")
-		p.Interest = interest
-		p.LendingRate = lendingRate
-		productSearchList = append(productSearchList, *p)
-	}
-	if productSearchList == nil {
-		productSearchList = []productInfo{}
-	}
-	ret := RetrieveResponse{Msg: "success", Data: productSearchList}
-	retBytes, err := json.Marshal(ret)
-	w.Write(retBytes)
-	defer func() {
-		rows.Close()
-	}()
-}
-
-func deleteProduct(w http.ResponseWriter, r *http.Request) {
-	path := r.URL.Path
-	steps := strings.Split(path, "/")
-	id := steps[len(steps)-1]
-	stmt, err := db.Prepare(deleteProductSql)
-	_, err = stmt.Exec(id)
-	ret := DeleteResponse{Msg: "success"}
-	retBytes, err := json.Marshal(ret)
-	w.Write(retBytes)
-	defer func() {
-		if err != nil {
-			log.Println(err)
-		}
 	}()
 }
