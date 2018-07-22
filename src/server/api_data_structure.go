@@ -100,12 +100,24 @@ type productInfo struct {
 	ApplyStrategy         string      `json:"applyStrategy"`
 }
 
-type productSearch struct {
-	Id       string   `json:"id"`
-	Name     string   `json:"name"`
-	LimitMin string   `json:"limitMin"`
-	LimitMax string   `json:"limitMax"`
-	Interest interest `json:"interest"`
+type productList struct {
+	Id          string   `json:"id"`
+	Name        string   `json:"name"`
+	LimitMin    string   `json:"limitMin"`
+	LimitMax    string   `json:"limitMax"`
+	Slogan      string   `json:"slogan"`
+	ApplyNumber int      `json:"applyNumber"`
+	Interest    interest `json:"interest"`
+}
+
+type productListParams struct {
+	Name                  string   `json:"name"`
+	LimitMin              string   `json:"limitMin"`
+	LimitMax              string   `json:"limitMax"`
+	Type                  []string `json:"type"`
+	PersonalQualification []string `json:"personalQualification"`
+	PageIndex             int      `json:"pageIndex"`
+	PageSize              int      `json:"pageSize"`
 }
 
 type interest struct {

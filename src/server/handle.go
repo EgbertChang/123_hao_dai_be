@@ -42,6 +42,7 @@ func registerHandler(h *elea.Handle) {
 	h.Register("/be/manage/A/add", addA)
 	h.Register("/be/manage/A/list", listA)
 	h.Register("/be/manage/A/delete/", deleteA)
+	h.Register("/be/manage/A/detail/", detailA)
 	h.Register("/be/manage/B/add", addB)
 	h.Register("/be/manage/B/list", listB)
 	h.Register("/be/manage/B/delete/", deleteB)
@@ -51,6 +52,7 @@ func registerHandler(h *elea.Handle) {
 	h.Register("/be/manage/product/edit/", editProduct)
 	h.Register("/be/manage/product/detail/", productDetail)
 	h.Register("/be/manage/product/list", listProduct)
+	h.Register("/be/manage/product/filter", filterProduct)
 }
 
 func Handle() elea.HandleSet {
@@ -83,7 +85,10 @@ func listA(w http.ResponseWriter, r *http.Request) {
 	bodyBytes, err := ioutil.ReadAll(r.Body)
 	var params listAParams
 	json.Unmarshal(bodyBytes, &params)
-	rows, err := db.Query(selectAllASql, (params.PageIndex-1)*params.PageSize, params.PageSize)
+	rows, err := db.Query(selectAllASql,
+		"%"+params.Name+"%",
+		(params.PageIndex-1)*params.PageSize,
+		params.PageSize)
 	var AList []A
 	for rows.Next() {
 		a := &A{}
@@ -118,6 +123,20 @@ func deleteA(w http.ResponseWriter, r *http.Request) {
 			log.Println(err)
 		}
 	}()
+}
+
+func detailA(w http.ResponseWriter, r *http.Request) {
+	path := r.URL.Path
+	steps := strings.Split(path, "/")
+	id := steps[len(steps)-1]
+	var a A
+	row := db.QueryRow(selectAInfoSql, id)
+	row.Scan(&a.Id, &a.Name, &a.BNum)
+	res := RetrieveResponse{}
+	res.Msg = "success"
+	res.Data = a
+	resBytes, _ := json.Marshal(res)
+	w.Write(resBytes)
 }
 
 func addB(w http.ResponseWriter, r *http.Request) {
@@ -358,7 +377,13 @@ func productDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func listProduct(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query(selectProductListSql)
+	bodyBytes, _ := ioutil.ReadAll(r.Body)
+	var params productListParams
+	json.Unmarshal(bodyBytes, &params)
+	rows, err := db.Query(selectProductListSql,
+		"%"+params.Name+"%",
+		(params.PageIndex-1)*params.PageSize,
+		params.PageSize)
 	if err != nil {
 		// 数据库抛出的错误
 		ret := RetrieveResponse{Msg: "failure", Data: []int{}}
@@ -366,18 +391,75 @@ func listProduct(w http.ResponseWriter, r *http.Request) {
 		w.Write(retBytes)
 		return
 	}
-	var productSearchList []productSearch
+	var productSearchList []productList
 	for rows.Next() {
-		p := &productSearch{}
+		p := &productList{}
 		var temp []byte
 		var interest interest
-		_ = rows.Scan(&p.Id, &p.Name, &p.LimitMin, &p.LimitMax, &temp)
+		_ = rows.Scan(&p.Id, &p.Name, &p.LimitMin, &p.LimitMax,
+			&p.Slogan, &p.ApplyNumber, &temp)
 		json.Unmarshal(temp, &interest)
 		p.Interest = interest
 		productSearchList = append(productSearchList, *p)
 	}
 	if productSearchList == nil {
-		productSearchList = []productSearch{}
+		productSearchList = []productList{}
+	}
+	ret := RetrieveResponse{Msg: "success", Data: productSearchList}
+	retBytes, err := json.Marshal(ret)
+	w.Write(retBytes)
+	defer func() {
+		rows.Close()
+	}()
+}
+
+func filterProduct(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, _ := ioutil.ReadAll(r.Body)
+	var params productListParams
+	json.Unmarshal(bodyBytes, &params)
+
+	// fmt.Println(params.LimitMin)
+	// fmt.Println(params.LimitMax)
+	// fmt.Println(params.Type[0])
+	// personalQualificationSting := strings.Join(params.PersonalQualification, ",")
+	// fmt.Println(personalQualificationSting)
+
+	var qualification string
+	for _, v := range params.PersonalQualification {
+		qualification += " AND personalQualification LIKE " + "\"%" + v + "%\" "
+	}
+
+	filterSql := `SELECT id, name, limitMin, limitMax, slogan, applyNumber, interest FROM product 
+WHERE name LIKE ? AND limitMin >= ? AND limitMax <= ? AND type LIKE ? ` + qualification + ` LIMIT ?, ?`
+
+	rows, err := db.Query(filterSql,
+		"%"+params.Name+"%",
+		params.LimitMin,
+		params.LimitMax,
+		"%"+params.Type[0]+"%",
+		(params.PageIndex-1)*params.PageSize,
+		params.PageSize)
+
+	if err != nil {
+		// 数据库抛出的错误
+		ret := RetrieveResponse{Msg: "failure", Data: []int{}}
+		retBytes, _ := json.Marshal(ret)
+		w.Write(retBytes)
+		return
+	}
+	var productSearchList []productList
+	for rows.Next() {
+		p := &productList{}
+		var temp []byte
+		var interest interest
+		_ = rows.Scan(&p.Id, &p.Name, &p.LimitMin, &p.LimitMax,
+			&p.Slogan, &p.ApplyNumber, &temp)
+		json.Unmarshal(temp, &interest)
+		p.Interest = interest
+		productSearchList = append(productSearchList, *p)
+	}
+	if productSearchList == nil {
+		productSearchList = []productList{}
 	}
 	ret := RetrieveResponse{Msg: "success", Data: productSearchList}
 	retBytes, err := json.Marshal(ret)
