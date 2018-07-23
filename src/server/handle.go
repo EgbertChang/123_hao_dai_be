@@ -424,12 +424,19 @@ func filterProduct(w http.ResponseWriter, r *http.Request) {
 	// personalQualificationSting := strings.Join(params.PersonalQualification, ",")
 	// fmt.Println(personalQualificationSting)
 
+	if params.LimitMin == "" {
+		params.LimitMin = "0"
+		params.LimitMax = "5000000"
+	}
+	if len(params.Type) == 0 {
+		params.Type = []string{""}
+	}
 	var qualification string
 	for _, v := range params.PersonalQualification {
 		qualification += " AND personalQualification LIKE " + "\"%" + v + "%\" "
 	}
 
-	filterSql := `SELECT id, name, limitMin, limitMax, slogan, applyNumber, interest FROM product 
+	filterSql := `SELECT id, name, limitMin, limitMax, logoUrl, slogan, applyNumber, interest FROM product 
 WHERE name LIKE ? AND limitMin >= ? AND limitMax <= ? AND type LIKE ? ` + qualification + ` LIMIT ?, ?`
 
 	rows, err := db.Query(filterSql,
@@ -447,13 +454,14 @@ WHERE name LIKE ? AND limitMin >= ? AND limitMax <= ? AND type LIKE ? ` + qualif
 		w.Write(retBytes)
 		return
 	}
+
 	var productSearchList []productList
 	for rows.Next() {
 		p := &productList{}
 		var temp []byte
 		var interest interest
 		_ = rows.Scan(&p.Id, &p.Name, &p.LimitMin, &p.LimitMax,
-			&p.Slogan, &p.ApplyNumber, &temp)
+			&p.LogoUrl, &p.Slogan, &p.ApplyNumber, &temp)
 		json.Unmarshal(temp, &interest)
 		p.Interest = interest
 		productSearchList = append(productSearchList, *p)

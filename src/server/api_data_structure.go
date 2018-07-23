@@ -105,6 +105,7 @@ type productList struct {
 	Name        string   `json:"name"`
 	LimitMin    string   `json:"limitMin"`
 	LimitMax    string   `json:"limitMax"`
+	LogoUrl     string   `json:"logoUrl"`
 	Slogan      string   `json:"slogan"`
 	ApplyNumber int      `json:"applyNumber"`
 	Interest    interest `json:"interest"`
