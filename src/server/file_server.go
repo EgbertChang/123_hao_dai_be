@@ -65,7 +65,7 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 	steps := strings.Split(path, "/")
 	fileType := steps[len(steps)-2]
 	fileName := steps[len(steps)-1]
-	file, err := os.Open("./src/assets/" + fileType + "/" + fileName)
+	file, err := os.Open("/root/go/src/123_hao_dai_be/src/assets/" + fileType + "/" + fileName)
 	if err != nil {
 		w.WriteHeader(404)
 		w.Write([]byte(`<body align=center><h2>404 Not Found</h2><hr>Elea 0.0.1</body>`))
