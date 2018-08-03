@@ -53,6 +53,7 @@ func registerHandler(h *elea.Handle) {
 	h.Register("/be/manage/product/detail/", productDetail)
 	h.Register("/be/manage/product/list", listProduct)
 	h.Register("/be/manage/product/filter", filterProduct)
+	h.Register("/be/manage/product/hot", hotProduct)
 }
 
 func Handle() elea.HandleSet {
@@ -439,11 +440,55 @@ func filterProduct(w http.ResponseWriter, r *http.Request) {
 	filterSql := `SELECT id, name, limitMin, limitMax, logoUrl, slogan, applyNumber, interest FROM product 
 WHERE name LIKE ? AND limitMin >= ? AND limitMax <= ? AND type LIKE ? ` + qualification + ` LIMIT ?, ?`
 
+	min, _ := strconv.Atoi(params.LimitMin)
+	max, _ := strconv.Atoi(params.LimitMax)
 	rows, err := db.Query(filterSql,
 		"%"+params.Name+"%",
-		params.LimitMin,
-		params.LimitMax,
+		min,
+		max,
 		"%"+params.Type[0]+"%",
+		(params.PageIndex-1)*params.PageSize,
+		params.PageSize)
+
+	if err != nil {
+		// 数据库抛出的错误
+		ret := RetrieveResponse{Msg: "failure", Data: []int{}}
+		retBytes, _ := json.Marshal(ret)
+		w.Write(retBytes)
+		return
+	}
+
+	var productSearchList []productList
+	for rows.Next() {
+		p := &productList{}
+		var temp []byte
+		var interest interest
+		_ = rows.Scan(&p.Id, &p.Name, &p.LimitMin, &p.LimitMax,
+			&p.LogoUrl, &p.Slogan, &p.ApplyNumber, &temp)
+		json.Unmarshal(temp, &interest)
+		p.Interest = interest
+		productSearchList = append(productSearchList, *p)
+	}
+	if productSearchList == nil {
+		productSearchList = []productList{}
+	}
+	ret := RetrieveResponse{Msg: "success", Data: productSearchList}
+	retBytes, err := json.Marshal(ret)
+	w.Write(retBytes)
+	defer func() {
+		rows.Close()
+	}()
+}
+
+func hotProduct(w http.ResponseWriter, r *http.Request) {
+	bodyBytes, _ := ioutil.ReadAll(r.Body)
+	var params productListParams
+	json.Unmarshal(bodyBytes, &params)
+
+	filterSql := `SELECT id, name, limitMin, limitMax, logoUrl, slogan, applyNumber, interest FROM product 
+ORDER BY applyNumber DESC LIMIT ?, ?`
+
+	rows, err := db.Query(filterSql,
 		(params.PageIndex-1)*params.PageSize,
 		params.PageSize)
 
